@@ -719,34 +719,34 @@ public class Game {
      * and then run this class.
      */
     public static void main(String[] args) {
-        String gameType = Utils.getArg(args, "game", "SushiGo");
-        boolean useGUI = Utils.getArg(args, "gui", true);
-        int turnPause = Utils.getArg(args, "turnPause", 0);
-        long seed = Utils.getArg(args, "seed", System.currentTimeMillis());
-        ActionController ac = new ActionController();
+        int totalGames = 100;
+        int mctsWins = 0;
 
-        /* Set up players for the game */
-        ArrayList<AbstractPlayer> players = new ArrayList<>();
+        System.out.println("Starting 100-game baseline experiment (Sushi Go)...");
 
-        players.add(new MCTSPlayer());
-//        players.add(new HumanConsolePlayer());
-//        players.add(new HumanConsolePlayer());
-//        players.add(new RandomPlayer());
-//        players.add(new RandomPlayer());
-        players.add(new RandomPlayer());
-        players.add(new RandomPlayer());
-//        players.add(new HumanGUIPlayer(ac));
-        players.add(new BasicMCTSPlayer());
-        players.add(new BasicMCTSPlayer());
-//        players.add(new BasicMCTSPlayer());
-//        players.add(new BasicMCTSPlayer());
+        for (int i = 0; i < totalGames; i++) {
+            ArrayList<AbstractPlayer> players = new ArrayList<>();
+            
+            // 4-Player setup: 1 BasicMCTS (from your groupAE package) vs 1 OSLA vs 2 Random Players
+            players.add(new groupAE.BasicMCTSPlayer());
+            players.add(new players.simple.OSLAPlayer());
+            players.add(new players.simple.RandomPlayer());
+            players.add(new players.simple.RandomPlayer());
 
+            long seed = System.currentTimeMillis() + i;
 
-        /* Game parameter configuration. Set to null to ignore and use default parameters */
-        String gameParams = null;
+            // Run the game using the framework's built-in runOne method (headless mode: ac = null, turnPause = 0)
+            Game gameInstance = runOne(GameType.SushiGo, null, players, seed, false, null, null, 0);
 
-        /* Run! */
-        runOne(GameType.valueOf(gameType), gameParams, players, seed, false, null, useGUI ? ac : null, turnPause);
+            // Check if Player 0 won using the correct framework enum constant (WIN_GAME)
+            if (gameInstance.getGameState().getPlayerResults()[0] == CoreConstants.GameResult.WIN_GAME) {
+                mctsWins++;
+            }
+        }
 
+        // Output final baseline statistics
+        double winRate = (double) mctsWins / totalGames * 100;
+        System.out.printf("Baseline Results: BasicMCTS won %d/%d games (%.2f%% win rate)%n", 
+                          mctsWins, totalGames, winRate);
     }
 }
